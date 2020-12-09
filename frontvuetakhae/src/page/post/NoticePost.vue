@@ -62,20 +62,26 @@ export default {
 
       notices: [
         {
+          title: "냉장고를 vue탁해 page 업데이트 1.0.5",
+          content:
+            "dummy데이터로 구성되었던 냉장고를 vue탁해 page를 DB와 연결하였습니다.",
+          date: "2020-08-12",
+        },
+        {
           title: "마이 페이지 이슈가 수정된 1.0.4 버전이 업데이트 되었습니다.",
           content:
             "dummy데이터로 구성되었던 마이 페이지를 DB와 연결하였습니다.",
-          date: "2020.08.07",
+          date: "2020-08-07",
         },
         {
           title: "데이터 베이스 수정 1.0.3 업데이트 안내",
           content: "데이터 베이스가 수정되었습니다.",
-          date: "2020.08.06",
+          date: "2020-08-06",
         },
         {
           title: "마이페이지, 나의 냉장고 추가된 1.0.2 업데이트 안내",
           content: "마이페이지와 나의 냉장고 기능이 추가되었습니다.",
-          date: "2020.08.05",
+          date: "2020-08-05",
         },
         {
           title: "안녕하세요! '냉장고를 vue탁해'가 여러분께 인사드립니다.",
@@ -92,6 +98,10 @@ export default {
 <style>
 .notice-bg {
   background-image: url("https://user-images.githubusercontent.com/60081201/89377548-0bd17d00-d72d-11ea-95aa-b144ef9162a5.jpg");
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
   min-height: 100%;
 }
 .image {

@@ -34,7 +34,7 @@ public class JwtInterceptor implements HandlerInterceptor {
                 log.trace("토큰 사용 가능: {}", token);
                 return true;
             } else {
-                throw new RuntimeException();
+                throw new RuntimeException("qweqweqw");
             }
         }
     }

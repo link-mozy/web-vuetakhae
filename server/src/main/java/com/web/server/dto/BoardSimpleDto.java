@@ -21,6 +21,7 @@ public class BoardSimpleDto {
     private String  thumbnailImage;  // 이미지
     private Double  cookingTime;     // 소요시간
     private int     grade;           // 난이도
+    private int favorite;            // 즐겨찾기 여부 1->즐겨찾기 , 0-> 즐겨찾기 안한 것
     private int commentCount;       // 댓글 갯수
 //    private int tagCount;           // 테그 (나중에 작업)
 }

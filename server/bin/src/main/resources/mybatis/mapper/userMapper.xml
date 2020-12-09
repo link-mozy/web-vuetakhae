@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.web.server.dto.User">
+
+    <!-- 특정 글 번호에 글의 내용을 리턴하는 select 생성 -->
+
+    <!-- 로그인. 이메일, 패스워드로 계정 확인   -->
+    <select id="login" parameterType="hashMap" resultType="user">
+        select * from users where email=#{email} and password = #{password}
+    </select>
+
+    <!-- 닉네임 중복 확인   -->
+    <select id="checkbynickname" parameterType="string" resultType="int">
+        select sum(exists (select user_id from users where nickname = #{nickname})) from users
+    </select>
+
+    <!-- 이메일, 닉네임 중복 확인   -->
+    <select id="checkbyemailandnickname" parameterType="hashMap" resultType="int">
+        select sum(exists (select user_id from users where email = #{email} or nickname = #{nickname})) from users
+    </select>
+
+    <!--  팔로우 여부 확인  -->
+    <select id="checkfollow" parameterType="hashMap" resultType="int">
+        select sum(exists (select follower from follow where follower = #{follower} and followee = #{followee})) from follow
+    </select>
+    
+    <!-- 마이페이지: 닉네임, 자기소개, 나의냉장고, 팔로잉 수, 팔로우 수 조회 -->
+    <select id="selectbyuserprofilebyuserid" parameterType="int" resultMap="userprofile">
+    	select nickname,
+               introduce,
+               box,
+               count(case when followee=#{userId} then #{userId} end) as following_count,
+	           count(case when follower=#{userId} then #{userId} end) as follower_count
+        from users, follow
+        where users.user_id = #{userId}
+    </select>
+
+    <select id="selectbyid" parameterType="int" resultType="user">
+		select * from users where user_id=#{userId}
+	</select>
+
+    <select id="selectbyemail" parameterType="string" resultType="user">
+		select * from users where email=#{email}
+	</select>
+
+    <select id="selectbynickname" parameterType="string" resultType="user">
+		select * from users where nickname=#{nickname}
+	</select>
+
+    <select id="search" parameterType="hashMap" resultType="user">
+        select * from users
+        <if test='by=="uid"'>
+            where uid LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test='by=="email"'>
+            where email LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+    </select>
+
+    <select id="selectAll" resultType="user">
+        select * from users
+    </select>
+
+    <select id="selectFollowList" parameterType="hashMap" resultType="hashMap">
+        select nickname, image
+        from users
+        <choose>
+            <when test="follower != null">
+                join follow on users.user_id = follow.followee
+                where follow.follower = (select user_id from users where email = #{follower})
+            </when>
+            <when test="followee != null">
+                join follow on users.user_id = follow.follower
+                where follow.followee = (select user_id from users where email = #{followee})
+            </when>
+        </choose>
+    </select>
+
+    <update id="update" parameterType="user">
+		update users
+        <set>
+            <if test="nickname!=null">
+                nickname = #{nickname},
+            </if>
+            <if test="password!=null">
+                password = #{password},
+            </if>
+            <if test="introduce!=null">
+                introduce = #{introduce},
+            </if>
+            <if test="box!=null">
+                box = #{box}
+            </if>
+        </set>
+        where email = #{email}
+	</update>
+
+    <insert id="insert" parameterType="user">
+		insert into users (email,password,nickname)
+		values(#{email}, #{password}, #{nickname})
+	</insert>
+
+    <insert id="insertFollow" parameterType="follow">
+        INSERT INTO follow (follower, followee) VALUES (#{follower}, #{followee})
+    </insert>
+
+    <delete id="delete" parameterType="string">
+		delete from users where
+		email=#{email}
+	</delete>
+
+    <delete id="deletefollow" parameterType="hashMap">
+        delete from follow
+        where follower=#{follower} and followee=#{followee}
+    </delete>
+
+	<resultMap type="com.web.server.dto.UserProfileDto" id="userprofile">
+		<id column="nickname" property="nickname"/>
+		<result column="introduce" property="introduce"/>
+		<result column="box" property="box"/>
+	</resultMap>
+</mapper>

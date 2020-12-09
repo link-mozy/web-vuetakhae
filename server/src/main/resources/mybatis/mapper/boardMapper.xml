@@ -7,26 +7,114 @@
     <!--  게시글 전체 조회  -->
     <select id="selectAll" resultType="boardsimple">
         select board_id,
-            title,
-            nickname,
-            create_at,
-            thumbnail_image,
-            cooking_time,
-            grade
+        title,
+        nickname,
+        create_at,
+        thumbnail_image,
+        cooking_time,
+        grade,
+        (select count(*) from interest_boards where board_id=boards.board_id and user_id=(select user_id from users
+        where email=#{email})) as favorite
         from boards join users on boards.user_id = users.user_id
+        where temporary = 0
+        <if test="keyword != null">
+            <choose>
+                <when test="type == 1">
+                    and title LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="type == 2">
+                    and nickname LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+            </choose>
+        </if>
+        ORDER BY views DESC
+    </select>
+
+    <select id="isExistFavorite" resultType="int">
+        select count(*) from interest_boards where user_id=(select user_id from users where email = #{email}) and
+        board_id=#{boardId}
+    </select>
+
+    <delete id="deleteFavorite">
+        delete from interest_boards where user_id =(select user_id from users where email =#{email}) and board_id
+        =#{boardId}
+    </delete>
+
+    <insert id="insertFavorite">
+        insert into interest_boards(user_id,board_id) values ((select user_id from users where email =
+        #{email}),#{boardId});
+    </insert>
+
+    <select id="searchAllByFood" resultType="boardsimple">
+        select board_id,
+        title,
+        nickname,
+        create_at,
+        thumbnail_image,
+        cooking_time,
+        grade,
+        (select count(*) from interest_boards where board_id=boards.board_id) as favorite
+        from boards join users on boards.user_id = users.user_id
+        where
+        <foreach collection="foodList" item="food" open="(" close=")" separator="and">
+            ingredient LIKE CONCAT('%', #{food}, '%')
+        </foreach>
+        and temporary = 0
     </select>
 
     <!--  게시글 번호로 조회  -->
     <select id="selectOneBoardByBoardId" parameterType="int" resultType="board">
-        select *
+        select *,(select nickname from users where user_id=boards.user_id) as nickname,(select image from users where user_id=boards.user_id) as writerImage,
+        (select count(*) from hardeasy where grade = 2 AND board_id=#{boardId}) as easyCount,(select count(*) from
+        hardeasy where grade = 1 AND board_id=#{boardId}) as difficultyCount
         from boards
-        where board_id=#{boardId}
+        where board_id=#{boardId} and temporary = 0
+
+
     </select>
 
-    <select id="selectStepsInBoardByBoardId" parameterType="int" resultType="stepofboard">
-        select step_number, image, description
-        from steps_of_boards
+    <select id="selectStepsInBoardByBoardId" parameterType="int" resultType="step">
+        select step_id, board_id, step_number, image, description, type
+        from steps
         where board_id = #{boardId}
+        order by step_number
+    </select>
+
+    <!--  유저아이디로 게시글 조회  -->
+    <select id="selectBoardsByUserId" parameterType="int" resultType="board">
+        select *
+        from boards
+        where user_id=#{userId} and temporary = 0
+    </select>
+
+    <!--  관심 게시글들 유저 아이디로 조회  -->
+    <select id="selectInterestBoardsByUserId" parameterType="int" resultType="board">
+        select boards.user_id as user_id,
+        boards.title as title,
+        title,
+        ingredient,
+        content,
+        create_at,
+        update_at,
+        grade,
+        cooking_time,
+        thumbnail_image
+        from interest_boards
+        join boards on interest_boards.board_id = boards.board_id
+        where interest_boards.user_id = #{userId}
+    </select>
+
+    <!--  게시글 내 단계의 태그 저장할때 태그가 있는 지 확인!  -->
+    <select id="selectTagExist" parameterType="tag" resultType="tag">
+        select *
+        from tags
+        where tag_name like concat('%' , #{tagName}, '%')
+    </select>
+
+    <select id="getTagList" resultType="tag">
+        select t.tag_id,t.tag_name
+        from step_tags st,tags t
+        where st.tag_id = t.tag_id and step_id=#{selectedStepId}
     </select>
 
     <!--  게시글 작성  -->
@@ -38,10 +126,91 @@
         values (#{userId}, #{title}, #{ingredient}, #{content}, #{grade}, #{cookingTime}, #{thumbnailImage})
     </insert>
 
+    <delete id="deleteBoard">
+        DELETE FROM boards
+        WHERE board_id=#{boardId}
+    </delete>
+
+
     <!--  게시글 내 단계 저장  -->
-    <insert id="insertStep" parameterType="stepofboard">
-        insert into steps_of_boards (board_id, image, description, step_number)
-        values (#{boardId}, #{image}, #{description}, #{stepNumber})
+    <insert id="insertStep" parameterType="step">
+        insert into steps (board_id, image, description, step_number,type)
+        values (#{boardId}, #{image}, #{description}, #{stepNumber},#{type})
+        <selectKey order="AFTER" resultType="int" keyProperty="stepId">
+            select max(step_id) from steps
+        </selectKey>
     </insert>
 
+    <!--  게시글 내 단계의 태그 저장  -->
+    <insert id="insertTag" parameterType="tag">
+        insert into tags(tag_name)
+        values (#{tagName})
+        <selectKey order="AFTER" resultType="int" keyProperty="tagId">
+            select max(tag_id) from tags
+        </selectKey>
+    </insert>
+
+    <!--  게시글과 태그 관계 테이블에 추가  -->
+    <insert id="insertStepTags" parameterType="stepTag">
+        insert into step_tags(step_id,tag_id)
+        values (#{stepId},#{tagId})
+    </insert>
+
+    <update id="addViews" parameterType="int">
+        UPDATE boards
+        set views= views + 1
+        WHERE board_id=#{boardId}
+    </update>
+
+    <!--    게시글 수정  -->
+    <update id="updateBoard">
+        update boards
+        set title = #{title}, ingredient = #{ingredient}, content = #{content}, grade = #{grade},
+        cooking_time = #{cookingTime}, thumbnail_image = #{thumbnailImage}, temporary = 0, update_at = now()
+        where board_id = #{boardId}
+    </update>
+
+    <!--    게시글 수정할 때 기존에 있던 태그 다 삭제   -->
+    <delete id="updateDeleteTags">
+        delete from tags
+        where tag_id in (select tag_id from step_tags
+        where step_id in (select step_id from steps where board_id = #{boardId}))
+    </delete>
+
+    <!--    게시글 수정할 때  기존에 있던 단계 다 삭제   -->
+    <delete id="updateDeleteSteps">
+        delete from steps
+        where board_id = #{boardId}
+    </delete>
+
+    <!-- 무한 스크롤 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!-->
+    <select id="infiniteScroll" resultType="board">
+        <![CDATA[
+        select * from boards where board_id>0 order by views desc limit #{scrollNumber},3;]]>
+    </select>
+
+    <select id="selectAllByCreateAt" resultType="boardsimple">
+        select board_id,
+        title,
+        nickname,
+        create_at,
+        thumbnail_image,
+        cooking_time,
+        grade,
+        (select count(*) from interest_boards where board_id=boards.board_id and user_id=(select user_id from users
+        where email=#{email})) as favorite
+        from boards join users on boards.user_id = users.user_id
+        where temporary = 0
+        <if test="keyword != null">
+            <choose>
+                <when test="type == 1">
+                    and title LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="type == 2">
+                    and nickname LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+            </choose>
+        </if>
+        ORDER BY create_at DESC
+    </select>
 </mapper>

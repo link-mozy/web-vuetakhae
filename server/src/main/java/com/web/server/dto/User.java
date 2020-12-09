@@ -20,4 +20,5 @@ public class User {
     private String image;     // 이미지 경로
     private Date createDate;
     private String authority; // 사용자 권한
+    private String box;       // 냉장고
 }

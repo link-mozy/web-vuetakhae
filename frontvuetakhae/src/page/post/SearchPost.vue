@@ -1,8 +1,10 @@
 <template>
   <div class="searchPost">
     <div class="container">
-      <v-card class="p-3" color="grey lighten-1">
+      <v-card class="p-3">
         <h2 class="m-3 0 4">나의 냉장고</h2>
+        <h3 v-if="emptyChip" class="white--text">요리할 재료를 입력해주세요. 냉뷰가 기다리고 있습니다.</h3>
+
         <div>
           <div class="left d-sm-inline-flex pa-2">
             <v-row class="m-2 inputBlank" variant="danger">
@@ -36,67 +38,160 @@
           </div>
         </div>
       </v-card>
+
+      <!-- API안에 있는 요리 레시피 -->
+
       <h2 class="m-5 white--text">지금 당장 가능한 요리 레시피</h2>
-      <h3 v-if="emptyChip" class="white--text">요리할 재료를 입력해주세요. 냉뷰가 기다리고 있습니다.</h3>
+
       <div class="row row-cols-3 searchPostContent">
-        <ul v-for="showData in showDatas" :key="showData.title">
+        <ul v-for="apiboard in searchData.apiboards" :key="apiboard.title">
           <v-hover v-slot:default="{ hover }" open-delay="200">
             <v-card max-width="344" class="mx-auto" :elevation="hover ? 16 : 2">
-              <v-list-item @click="goDetail(showData.boardId)">
-                <v-list-item-avatar color="grey"></v-list-item-avatar>
-                <v-list-item-content>
-                  <v-list-item-title class="headline">
+              <v-list-item @click="goApiDetail(apiboard.boardId)">
+                <v-list-item-content class="row">
+                  <v-list-item-title class="headline text-center col-9">
                     {{
-                    showData.title
+                    apiboard.title
                     }}
                   </v-list-item-title>
-                  <v-list-item-subtitle style="text-align:right;">작성자 : {{ showData.nickname }}</v-list-item-subtitle>
-                  <small style="text-align:right;">
-                    {{
-                    showData.createAt
-                    }}
-                  </small>
+                  <div class="col-3" @click="heartRecipe(searchData.boardId)">
+                    <span v-if="searchData.favorite">
+                      <v-bottom-navigation
+                        class="elevation-0"
+                        :value="searchData.favorite"
+                        style="width: 60px"
+                        color="deep-purple"
+                      >
+                        <v-btn>
+                          <span>즐겨찾기</span>
+                          <v-icon>mdi-heart</v-icon>
+                        </v-btn>
+                      </v-bottom-navigation>
+                    </span>
+                    <span v-else>
+                      <v-bottom-navigation
+                        class="elevation-0"
+                        :value="searchData.favorite"
+                        style="width: 60px"
+                        color="secondary lighten-2"
+                      >
+                        <v-btn>
+                          <span>즐겨찾기</span>
+                          <v-icon>mdi-heart</v-icon>
+                        </v-btn>
+                      </v-bottom-navigation>
+                    </span>
+                  </div>
                 </v-list-item-content>
               </v-list-item>
 
               <v-img
-                :src="showData.thumbnailImage"
+                :src="apiboard.thumbnailImage"
                 height="194"
-                @click="goDetail(showData.boardId)"
+                @click="goApiDetail(apiboard.boardId)"
               ></v-img>
 
-              <v-card-text @click="goDetail(showData.boardId)">
-                <p class="caption">소요시간 : {{ showData.cookingTime }}시간</p>난이도
+              <v-card-text @click="goApiDetail(apiboard.boardId)" style="text-align: left">
+                <v-list-item-subtitle class="mb-2">작성자 : {{ apiboard.nickname }}</v-list-item-subtitle>
+                <small style="float:right">
+                  {{
+                  apiboard.createAt
+                  }}
+                </small>
+                <p class="m-0">소요시간 : {{ apiboard.cookingTime }}시간</p>난이도
                 <v-rating
-                  class="p-0"
+                  class="d-inline-flex pa-2"
                   small
-                  v-model="showData.grade"
+                  v-model="apiboard.grade"
                   background-color="orange lighten-3"
                   color="orange"
                 ></v-rating>
+                <v-btn icon style="float:right">
+                  <img
+                    @click="
+                      kakaoShare(
+                        apiData.title,
+                        apiData.boardId,
+                        apiData.thumbnailImage,
+                        apiData.nickname
+                      )
+                    "
+                    src="//developers.kakao.com/assets/img/about/logos/kakaolink/kakaolink_btn_small.png"
+                    width="40"
+                  />
+                </v-btn>
               </v-card-text>
-              <v-card-actions>
-                <v-btn @click="goDetail(showData.boardId)" text color="deep-purple accent-4">자세히 보기</v-btn>
-                <v-btn text color="deep-purple accent-4">즐겨찾기</v-btn>
-                <v-btn icon>
-                  <v-icon>mdi-heart</v-icon>
-                </v-btn>
+            </v-card>
+          </v-hover>
+        </ul>
+      </div>
+      <div class="row row-cols-3 searchPostContent">
+        <ul v-for="board in searchData.boards" :key="board.title">
+          <v-hover v-slot:default="{ hover }" open-delay="200">
+            <v-card max-width="344" class="mx-auto" :elevation="hover ? 16 : 2">
+              <v-list-item @click="goDetail(board.boardId)">
+                <v-list-item-content class="row">
+                  <v-list-item-title class="headline text-center col-9">{{ board.title }}</v-list-item-title>
+                  <div class="col-3" @click="heartRecipe(board.boardId)">
+                    <span v-if="searchData.favorite">
+                      <v-bottom-navigation
+                        class="elevation-0"
+                        :value="searchData.favorite"
+                        style="width: 60px"
+                        color="deep-purple"
+                      >
+                        <v-btn>
+                          <span>즐겨찾기</span>
+                          <v-icon>mdi-heart</v-icon>
+                        </v-btn>
+                      </v-bottom-navigation>
+                    </span>
+                    <span v-else>
+                      <v-bottom-navigation
+                        class="elevation-0"
+                        :value="searchData.favorite"
+                        style="width: 60px"
+                        color="secondary lighten-2"
+                      >
+                        <v-btn>
+                          <span>즐겨찾기</span>
+                          <v-icon>mdi-heart</v-icon>
+                        </v-btn>
+                      </v-bottom-navigation>
+                    </span>
+                  </div>
+                </v-list-item-content>
+              </v-list-item>
 
-                <v-spacer></v-spacer>
-                <v-btn icon @click="changeEasy">
-                  <div v-if="easy">
-                    <b-icon icon="emoji-smile" scale="2" variant="warning"></b-icon>
-                    <p class="caption mb-0 mt-1">easy</p>
-                  </div>
-                  <div v-else>
-                    <b-icon icon="emoji-frown" scale="2" variant="secondary"></b-icon>
-                    <p class="caption mb-0 mt-1">hard</p>
-                  </div>
+              <v-img :src="board.thumbnailImage" height="194" @click="goDetail(board.boardId)"></v-img>
+              <v-card-text @click="goDetail(board.boardId)" style="text-align: left;">
+                <v-list-item-subtitle class="mb-2">
+                  작성자 : {{ board.nickname }}
+                  <small style="float:right">{{ board.createAt }}</small>
+                </v-list-item-subtitle>
+                <p class="caption">소요시간 : {{ board.cookingTime }}시간</p>난이도
+                <v-rating
+                  class="d-inline-flex pa-2"
+                  small
+                  v-model="board.grade"
+                  background-color="orange lighten-3"
+                  color="orange"
+                ></v-rating>
+                <v-btn icon style="float:right">
+                  <img
+                    @click="
+                      kakaoShare(
+                        apiData.title,
+                        apiData.boardId,
+                        apiData.thumbnailImage,
+                        apiData.nickname
+                      )
+                    "
+                    src="//developers.kakao.com/assets/img/about/logos/kakaolink/kakaolink_btn_small.png"
+                    width="40"
+                  />
                 </v-btn>
-                <v-btn icon>
-                  <v-icon>mdi-share-variant</v-icon>
-                </v-btn>
-              </v-card-actions>
+              </v-card-text>
             </v-card>
           </v-hover>
         </ul>
@@ -104,131 +199,125 @@
     </div>
   </div>
 </template>
-
+<script
+  type="text/JavaScript"
+  src="https://developers.kakao.com/sdk/js/kakao.min.js"
+></script>
 <script>
+import InfiniteLoading from "vue-infinite-loading";
 import axios from "axios";
+const BACK_URL = "http://i3a305.p.ssafy.io:8399/api";
 
 export default {
   name: "SearchPost",
   data() {
     return {
+      limit: 1,
+      searchData: {
+        boards: [],
+        apiboards: [],
+      },
       easy: true,
-      limit: 0,
       addText: "",
       emptyChip: false,
-      backDatas: [],
       showDatas: [],
       frag: 0,
       chips: [
         // 마이페이지에 입력한 나의 냉장고 데이터를 넣기
-        "간장",
-        "김치",
-      ],
-      dummyData: [
-        {
-          title: "간단한 연어덮밥",
-          content: "30분안에 끝나는 연어덮밥 요리 방법",
-          image: "https://i.imgur.com/Ztp9hAN.jpg",
-          materials: ["연어", "간장", "와사비", "밥", "양파"],
-          date: "2020.07.30",
-          comment: 3,
-          nickname: "연어가좋아",
-          like: 3,
-          steps: [
-            "연어를 자른다",
-            "밥 위에 연어를 올린다.",
-            "양파와 와사비로 고명을 해준다.",
-          ],
-        },
-        {
-          title: "쇠고기 미역국",
-          content: "거의 밥도둑!",
-          image: "https://i.imgur.com/O1cQ8N7.jpg",
-          materials: ["소고기", "소금", "미역", "간장", "참기름"],
-          date: "2020.07.30",
-          comment: 3,
-          nickname: "간장게장",
-          like: 3,
-          steps: [
-            "물을 끓인다",
-            "미역을 넣고 끓인다.",
-            "소고기를 넣고 간장으로 간을 맞춰준다.",
-            "참기름으로 감칠맛을 더한다.",
-          ],
-        },
-        {
-          title: "김치볶음밥",
-          content: "백종원 선생님의 황금레시피",
-          image: "https://i.imgur.com/7pNI9BA.jpg",
-          materials: ["김치", "간장", "스팸", "베이컨", "밥", "계란"],
-          date: "2020.07.30",
-          comment: 3,
-          nickname: "골목식당",
-          like: 3,
-          steps: [
-            "김치를 식용유에 볶는다.",
-            "스팸을 넣어 볶다가 밥을 넣는다.",
-            "간장을 살짝 태워 밥에 섞는다.",
-            "계란을 넣고 마무리한다.",
-          ],
-        },
-        {
-          title: "전주비빔밥",
-          content: "계속 생각나는 그 맛",
-          image: "https://i.imgur.com/oDHwKwP.jpg",
-          materials: [
-            "계란",
-            "소고기",
-            "당근",
-            "콩나물",
-            "간장",
-            "고추장",
-            "밥",
-            "오이",
-            "호박",
-          ],
-          date: "2020.07.30",
-          comment: 3,
-          nickname: "콩나물국밥",
-          like: 3,
-          steps: ["밥을 한다", "나물을 준비한다.", "나물은 얹고 섞어준다."],
-        },
-        {
-          title: "김치전",
-          content: "비오는 날 생각나는",
-          image: "https://i.imgur.com/2nMSgb8.jpg",
-          date: "2020.07.30",
-          materials: [
-            "김치",
-            "소금",
-            "간장",
-            "다진마늘",
-            "양파",
-            "밀가루",
-            "물",
-          ],
-          comment: 3,
-          nickname: "비가오는날엔",
-          like: 3,
-          steps: [
-            "밀가루와 김치를 넣고 반죽을 만든다.",
-            "반죽을 굽는다.",
-            "맛있게 먹는다.",
-          ],
-        },
       ],
     };
   },
+  components: {
+    InfiniteLoading,
+  },
   created() {
-    axios.get("http://i3a305.p.ssafy.io:8399/api/boards").then((response) => {
-      console.log(response.data);
-      this.backDatas = response.data.boards;
-    });
-    if (this.chips.length === 0) {
-      this.emptyChip = true;
-    }
+    axios
+      .get(`${BACK_URL}/users/mypage/box`, {
+        headers: { "jwt-auth-token": this.$cookies.get("token") },
+      })
+      .then((response) => {
+        // console.log(response.data);
+        this.chips = response.data.box;
+        axios
+          .post(`${BACK_URL}/boards/foodList`, { foodList: this.chips })
+          .then((response) => {
+            this.searchData.boards = response.data.boards;
+          });
+        if (this.chips.length === 0) {
+          this.emptyChip = true;
+        }
+        if (this.chips) {
+          // console.log(response.data.recipes);
+          axios
+            .post(`${BACK_URL}/boards/foodsafe/recipes/ingredient`, {
+              ingredient: this.chips,
+              page: 0,
+            })
+            .then((response) => {
+              // console.log(response);
+              this.searchData.apiboards = response.data.recipes;
+            });
+        } else {
+          axios
+            .post(`${BACK_URL}/boards/foodsafe/recipes/ingredient`, {
+              page: 0,
+            })
+            .then((response) => {
+              // console.log(response);
+              this.searchData.apiboards = response.data.recipes;
+            });
+        }
+      });
+
+    Kakao.init("bed1ac3b578a5c6daea9bcc807fdc6d8");
   },
   methods: {
+    infiniteHandler($state) {
+      // console.log("마지막");
+      if (this.chips) {
+        axios
+          .post(`${BACK_URL}/boards/foodsafe/recipes/ingredient`, {
+            ingredient: this.chips,
+            page: this.limit,
+          })
+          .then((response) => {
+            // console.log(this.limit);
+
+            // console.log(response.data.recipes);
+
+            setTimeout(() => {
+              if (response.data.recipes.length) {
+                this.searchData.apiboards = this.searchData.apiboards.concat(
+                  response.data.recipes
+                );
+                $state.loaded();
+                this.limit += 1;
+                // console.log
+                "after", this.searchData.apiboards.length, this.limit;
+                const EACH_LEN = 12;
+                if (response.data.recipes.length / EACH_LEN < 1) {
+                  $state.complete();
+                }
+              } else {
+                // 끝 지정(No more data)
+                $state.complete();
+              }
+            }, 1000);
+          })
+          .catch((err) => {
+            console.error(err);
+          });
+      } else {
+        axios
+          .post(`${BACK_URL}/boards/foodsafe/recipes/ingredient`, {
+            page: this.limit,
+          })
+          .then((response) => {
+            // console.log(response);
+            this.searchData.apiboards = response.data.recipes;
+          });
+      }
+    },
     changeEasy() {
       if (this.easy) {
         this.easy = false;
@@ -242,6 +331,9 @@ export default {
     },
     goDetail(boardId) {
       this.$router.push("/detail/" + boardId);
+    },
+    goApiDetail(boardId) {
+      this.$router.push("/foodsafe/detail/" + boardId);
     },
     plusFood() {
       // 빈값일 경우 추가 안되도록 한다.
@@ -263,35 +355,123 @@ export default {
     closeChip(tag) {
       // close 버튼 누를 경우 실행되는 메소드 (리스트에서 삭제)
       this.chips.splice(this.chips.indexOf(tag), 1);
+      axios
+        .post(`${BACK_URL}/boards/foodList`, { foodList: this.chips })
+        .then((response) => {
+          this.searchData.boards = response.data.boards;
+        });
+      if (this.chips) {
+        axios
+          .post(`${BACK_URL}/boards/foodsafe/recipes/ingredient`, {
+            ingredient: this.chips,
+            page: 0,
+          })
+          .then((response) => {
+            // console.log(response);
+            this.limit = 1;
+            this.searchData.apiboards = response.data.recipes;
+          });
+      } else {
+        axios
+          .post(`${BACK_URL}/boards/foodsafe/recipes/ingredient`, {
+            page: 0,
+          })
+          .then((response) => {
+            // console.log(response);
+            this.limit = 1;
+            this.searchData.apiboards = response.data.recipes;
+          });
+      }
       if (this.chips.length === 0) {
         this.emptyChip = true;
-      }
-      this.showDatas = [];
-      for (let j = 0; j < this.dummyData.length; j++) {
-        for (let k = 0; k < this.chips.length; k++) {
-          console.log(this.dummyData[j].materials, "구분", this.chips[k]);
-          if (this.dummyData[j].materials.includes(this.chips[k])) {
-            if (this.showDatas.includes(this.backDatas[j]) === false) {
-              this.showDatas.push(this.backDatas[j]);
-              break;
-            }
-          }
-        }
+        this.searchData.boards = [];
       }
     },
     check() {
-      this.showDatas = [];
-      for (let j = 0; j < this.dummyData.length; j++) {
-        for (let k = 0; k < this.chips.length; k++) {
-          console.log(this.dummyData[j].materials, "구분", this.chips[k]);
-          if (this.dummyData[j].materials.includes(this.chips[k])) {
-            if (this.showDatas.includes(this.backDatas[j]) === false) {
-              this.showDatas.push(this.backDatas[j]);
-              break;
-            }
-          }
-        }
+      axios
+        .post(`${BACK_URL}/boards/foodList`, { foodList: this.chips })
+        .then((response) => {
+          this.searchData.boards = response.data.boards;
+          // console.log(this.searchData.boards);
+        });
+      if (this.chips) {
+        // console.log(response.data.recipes);
+        axios
+          .post(`${BACK_URL}/boards/foodsafe/recipes/ingredient`, {
+            ingredient: this.chips,
+            page: 0,
+          })
+          .then((response) => {
+            this.limit = 1;
+            // console.log(response);
+            this.searchData.apiboards = response.data.recipes;
+          });
+      } else {
+        axios
+          .post(`${BACK_URL}/boards/foodsafe/recipes/ingredient`, {
+            page: 0,
+          })
+          .then((response) => {
+            // console.log(response);
+            this.limit = 1;
+            this.searchData.apiboards = response.data.recipes;
+          });
       }
+      if (this.chips.length === 0) {
+        this.emptyChip = true;
+      }
+    },
+    heartRecipe(boardId) {
+      // console.log(boardId);
+      // 즐겨찾기 눌렀을 경우 사용자 데이터에 추가하기
+      axios
+        .post(
+          `${BACK_URL}/boards/favorite`,
+          {
+            boardId: boardId,
+          },
+          {
+            headers: { "jwt-auth-token": this.$cookies.get("token") },
+          }
+        )
+        .then((response) => {
+          // console.log(response);
+          if (response.status === 200) {
+            alert("관심레시피에 등록되었습니다.");
+            // this.$router.go();
+          }
+        })
+        .catch((error) => {
+          alert(error);
+        });
+    },
+    kakaoShare(title, boardId, imgUrl, nickName) {
+      Kakao.Link.sendDefault({
+        objectType: "feed",
+        content: {
+          title: title, // 콘텐츠의 타이틀
+          description: "작성자 : " + nickName, // 콘텐츠 상세설명
+          imageUrl: imgUrl, // 썸네일 이미지
+          link: {
+            mobileWebUrl: "http://i3a305.p.ssafy.io/#/detail/" + boardId, // 모바일 카카오톡에서 사용하는 웹 링크 URL
+            webUrl: "http://i3a305.p.ssafy.io/#/detail/" + boardId, // PC버전 카카오톡에서 사용하는 웹 링크 URL
+          },
+        },
+        social: {
+          likeCount: 0, // LIKE 개수
+          commentCount: 0, // 댓글 개수
+          sharedCount: 0, // 공유 회수
+        },
+        buttons: [
+          {
+            title: "게시글 확인", // 버튼 제목
+            link: {
+              mobileWebUrl: "http://i3a305.p.ssafy.io/#/detail/" + boardId, // 모바일 카카오톡에서 사용하는 웹 링크 URL
+              webUrl: "http://i3a305.p.ssafy.io/#/detail/" + boardId, // PC버전 카카오톡에서 사용하는 웹 링크 URL
+            },
+          },
+        ],
+      });
     },
   },
 };
@@ -300,10 +480,12 @@ export default {
 <style>
 .searchPost {
   background-image: url("https://user-images.githubusercontent.com/60081201/89270362-33b1d980-d676-11ea-8b50-bee693e1ee36.jpg");
-  -webkit-background-size: cover;
-  -moz-background-size: cover;
-  -o-background-size: cover;
-  background-size: cover;
+  -webkit-background-size: 100%;
+  -moz-background-size: 100%;
+  -o-background-size: 100%;
+  background-size: 100%;
+  min-height: 100%;
+  background-attachment: fixed;
 }
 .searchPostContent {
   min-height: 400px;

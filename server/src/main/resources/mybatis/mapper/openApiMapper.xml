@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.web.server.repo.OpenApiDao">
+
+	<select id="selectAllFormBoards" resultType="board">
+		select rcp_seq as boardId, 
+				rcp_nm as title, 
+				att_file_no_main as thumbnailImage,
+				"식품안전나라" as nickname
+		from ssafy_open.recipes
+		order by (select views from board) DESC
+		limit #{page}, 12
+	</select>
+
+	<select id="selectAll" resultMap="foodSafeRecipe">
+		select ssafy_open.recipes.rcp_seq as rcp_seq, 
+									rcp_nm, hash_tag, 
+        							att_file_no_main, 
+        							att_file_no_mk, 
+        							rcp_parts_dtls,
+        							manual_id,
+        							manual_text,
+        							manual_img
+		from ssafy_open.recipes
+		join ssafy_open.manuals on ssafy_open.recipes.rcp_seq = ssafy_open.manuals.rcp_seq
+	</select>
+
+	<select id="selectByRcpSeq" parameterType="int" resultMap="foodSafeRecipe">
+		select ssafy_open.recipes.rcp_seq as rcp_seq, 
+									rcp_nm, hash_tag, 
+        							att_file_no_main, 
+        							att_file_no_mk, 
+        							rcp_parts_dtls,
+        							manual_id,
+        							manual_text,
+        							manual_img
+		from ssafy_open.recipes
+		join ssafy_open.manuals on ssafy_open.recipes.rcp_seq = ssafy_open.manuals.rcp_seq
+		where ssafy_open.recipes.rcp_seq = #{rcpSeq}
+	</select>
+	
+	<select id="selectByRcpNmFormBoards" parameterType="string" resultType="board">
+		select rcp_seq as boardId, 
+				rcp_nm as title, 
+				att_file_no_main as thumbnailImage,
+				"식품안전나라" as nickname
+		from ssafy_open.recipes
+		where rcp_nm LIKE CONCAT('%', #{rcpNm}, '%')
+	</select>
+	
+	<select id="selectByRcpPartsDtlsFormBoards" parameterType="hashMap" resultType="board">
+		select rcp_seq as boardId, 
+				rcp_nm as title, 
+				att_file_no_main as thumbnailImage,
+				"식품안전나라" as nickname
+		from ssafy_open.recipes
+		<where>
+			<if test="rcpPartsDtls!=null">
+		        <foreach collection="rcpPartsDtls" item="rcpPartsDtl" open="(" close=")" separator="and">
+		            rcp_parts_dtls LIKE CONCAT('%', #{rcpPartsDtl}, '%')
+		        </foreach>
+			</if>
+		</where>
+	</select>
+	
+	<resultMap type="com.web.server.dto.FoodSafeRecipeDto" id="foodSafeRecipe">
+		<id column="rcp_seq" property="rcpSeq"/>
+		<result column="rcp_nm" property="rcpNm"/>
+		<result column="rcp_parts_dtls" property="rcpPartsDtls"/>
+		<result column="att_file_no_main" property="attFileNoMain"/>
+		<result column="att_file_no_mk" property="attFileNoMk"/>
+		<result column="hash_tag" property="hashTag"/>
+		<collection property="manuals" column="rcp_seq" ofType="com.web.server.dto.FoodSafeManualDto">
+			<id column="manual_id" property="manualId"/>
+			<result column="manual_text" property="manualText"/>
+			<result column="manual_img" property="mnualImg"/>
+		</collection>
+	</resultMap>
+</mapper>

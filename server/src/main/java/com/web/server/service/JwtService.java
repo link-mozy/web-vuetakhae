@@ -94,7 +94,7 @@ public class JwtService {
             email = map.get("email").toString();
         } catch (final Exception e) {
             // TODO: handle exception
-            throw new RuntimeException();
+            throw new RuntimeException("유효하지 않은 유저 토큰입니다.");
         }
 
         log.trace("email: {}", email);

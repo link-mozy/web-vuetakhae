@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.web.server.repo.HardEasyDao">
+
+    <!-- 1은  hard 2는 easy -->
+    <insert id="hardChoice">
+        INSERT INTO HardEasy (boardId,userId,hardEasy)
+        VALUES (#{boardId},#{userId},1)
+    </insert>
+
+    <insert id="easyChoice">
+        INSERT INTO HardEasy (boardId,userId,hardEasy)
+        VALUES (#{boardId},#{userId},2)
+    </insert>
+
+    <delete id="deleteChoice">
+        DELETE FROM HardEasy
+        WHERE boardId=#{boardId} AND userId=#{userId}
+    </delete>
+
+    <select id="updateHardChoice">
+        UPDATE HardEasy
+        SET boardHardCnt=(SELECT COUNT(*) FROM HardEasy WHERE boardId=#{boardId} AND HardEasy=1)
+        WHERE boardId=#{boardId}
+    </select>
+
+    <select id="updateEasyChoice">
+        UPDATE HardEasy
+        SET boardEasyCnt=(SELECT COUNT(*) FROM HardEasy WHERE boardId=#{boardId} AND HardEasy=2)
+        WHERE boardId=#{boardId}
+    </select>
+
+    <!--    <select id="getHardChoice" resultType="int">-->
+    <!--            SELECT COUNT * FROM HardEasy WHERE board_id = #{boardId} AND user_id = #{userId}-->
+    <!--    </select>-->
+

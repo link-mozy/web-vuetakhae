@@ -15,6 +15,8 @@ public class CommentDto {
     private int boardId;            // 게시글 번호
     private Date createAt;          // 작성 시간
     private String commentContent;  // 내용
+    private String userImage;       // 댓글 쓴 사람의 이미지
 
     private String nickname;        // 닉네임
+    private String email;
 }

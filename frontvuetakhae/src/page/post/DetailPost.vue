@@ -1,188 +1,342 @@
 <template>
   <!-- <div> -->
-  <div class="container" v-if="backData">
+  <div class="container">
+    <div class="writerButton" v-if="userData.nickname == detailData.nickname">
+      <v-btn @click="goUpdate" small class="mr-2">수정</v-btn>
+      <v-btn small color="error" @click="deletePost">삭제</v-btn>
+      <hr />
+    </div>
     <div class="detailHeader">
-      <h1 class="mt-5 mb-2">
-        {{ backData.title }}
-        <b-badge class="mr-2" variant="success">난이도 3</b-badge>
-        <b-badge variant="secondary">소요시간 3시간</b-badge>
-      </h1>
-      <div @click="changeEasy" class="icon">
-        <!-- 좋아요 수 {{ likenum }} -->
-        <div v-if="easy">
-          <b-icon icon="emoji-smile" class="mr-1" scale="2" variant="warning"></b-icon>
-          <p class="caption mb-0 mt-1">easy</p>
-        </div>
-        <div v-else>
-          <b-icon icon="emoji-frown" class="mr-1" scale="2" variant="secondary"></b-icon>
-          <p class="caption mb-0 mt-1">hard</p>
-        </div>
+      <div class="mt-5 mb-2">
+        <h1>
+          {{ detailData.title }}
+          <b-badge class="mr-2" variant="success">난이도 {{ detailData.grade }}</b-badge>
+          <b-badge variant="secondary">소요시간 {{ detailData.cookingTime }}시간</b-badge>
+        </h1>
+        <span class="d-flex justify-content-end">조회 수 {{ detailData.views }}</span>
       </div>
+
       <b-row>
-        <b-col>
-          <b-avatar class="mt-2"></b-avatar>
+        <b-col col="1">
+          <img class="profile" :src="detailData.writerImage" />
         </b-col>
-        <b-col cols="10">
-          <p>{{ backData.nickname }}</p>
-          <p>{{ backData.date }} | 조회수 9</p>
+        <b-col cols="9" class="writerArea">
+          <p @click="goOtherpage(detailData.nickname)">{{ detailData.nickname }}</p>
+          <p>{{ detailData.createAt }}</p>
         </b-col>
-        <b-col>댓글 {{ backData.comment }}</b-col>
+        <b-col cols="2">
+          <b-progress
+            :value="detailData.easyCount"
+            :max="detailData.easyCount + detailData.difficultyCount"
+            variant="warning"
+            show-progress
+            animated
+          ></b-progress>
+          <v-row>
+            <div class="easyhardCss" @click="plusEasy">
+              <b-icon icon="emoji-smile" scale="2" variant="warning"></b-icon>
+              <p class="caption mb-0 mt-1">
+                {{ detailData.easyCount }}명
+                <br />쉬워요
+              </p>
+            </div>
+
+            <v-spacer></v-spacer>
+            <div class="easyhardCss" @click="plusHard">
+              <b-icon icon="emoji-frown" scale="2" variant="secondary"></b-icon>
+              <p class="caption mb-0 mt-1">
+                {{ detailData.difficultyCount }}명
+                <br />어려워요
+              </p>
+            </div>
+          </v-row>
+        </b-col>
       </b-row>
     </div>
     <hr />
     <div class="detailContent">
-      <h2 class="detailContentItem">필요한 재료</h2>
-      <p>{{ backData.materials }}</p>
+      <h4 class="detailContentItem">필요한 재료</h4>
+      <div class="font">
+        <p>{{ detailData.ingredient }}</p>
+      </div>
 
-      <h2 class="detailContentItem">과정</h2>
+      <h4 class="detailContentItem">요리 과정</h4>
+      <div class="font">
+        <ol v-for="(step, index) in detailData.steps" :key="step" type="1">
+          <p>
+            {{ index + 1 }}.
+            <span v-if="step.image != 'no image'">
+              <v-img :src="step.image" height="100px" width="100px"></v-img>
+            </span>
+            {{ step.description }}
+            <br />관련 태그 :
+            <b>{{ detailData.tags[index] }}</b>
+          </p>
+        </ol>
+      </div>
+      <hr />
 
-      <ul v-for="step in backData.steps" :key="step">
-        <li>
-          {{ step }}
-        </li>
-      </ul>
+      <h4 class="detailContentItem">후기</h4>
+      {{ detailData.content }}
       <hr />
-      <b-row>
-        <b-col>
-          <h2 class="detailContentItem">후기</h2>
-        </b-col>
-        <b-col cols="10">{{ backData.content }}</b-col>
-      </b-row>
-      <hr />
+
       <div class="comments">
-        <h2>댓글</h2>
-        <b-row>
+        <h4>댓글</h4>
+        <p class="d-flex justify-content-end">댓글 수 {{ detailData.comments.length }}</p>
+        <b-row v-for="comment in detailData.comments" :key="comment.commentId">
           <b-col>
-            <b-avatar variant="primary" class="m-2 auto" text="체리"></b-avatar>
-            <p>체리가 좋아</p>
-          </b-col>
-          <b-col cols="10">
-            <p>
-              간단한 레시피 감사합니다. 요알못에서 벗어날 수 있을 것 같아요!
-            </p>
-            <p>{{ backData.date }}</p>
-          </b-col>
-        </b-row>
-        <b-row>
-          <b-col>
-            <b-avatar variant="info" src="https://placekitten.com/300/300"></b-avatar>
-            <p>야옹쓰</p>
-          </b-col>
-          <b-col cols="10">
-            <p>보고 만들어 봤는 데 꿀맛이에요! 추천합니다.</p>
-            <p>2020.05.23</p>
-          </b-col>
-        </b-row>
+            <img class="profile" :src="comment.userImage" />
 
-        <b-row>
-          <b-col>
-            <b-avatar variant="success" icon="people-fill"></b-avatar>
-            <p>수지</p>
+            <p style="text-align:center;">{{ comment.nickname }}</p>
           </b-col>
           <b-col cols="10">
-            <b-input-group>
-              <b-form-input></b-form-input>
-              <b-button variant="secondary">등록</b-button>
-            </b-input-group>
+            <div v-if="userData.nickname == comment.nickname">
+              <input
+                :value="comment.commentContent"
+                @input="comment.commentContent = $event.target.value"
+                class="inputLength"
+              />
+              <p>{{ comment.createAt }}</p>
+            </div>
+            <div v-else>
+              <p>{{ comment.commentContent }}</p>
+              <p>{{ comment.createAt }}</p>
+            </div>
           </b-col>
+          <b-col v-if="userData.nickname == comment.nickname">
+            <v-btn @click="updateComment(comment.commentId, comment.commentContent)">수정</v-btn>
+            <v-btn color="secondary" class="mt-2" @click="deleteComment(comment.commentId)">삭제</v-btn>
+          </b-col>
+          <b-col v-else></b-col>
         </b-row>
-        <div></div>
+        <Comment @create-comment="createComment" v-if="userData.nickname != ''" />
+        <p v-if="userData.nickname == ''">댓글 작성은 로그인 후 이용해주세요!!</p>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import axios from "axios";
+import Comment from "@/page/postItem/Comment.vue";
+const BACK_URL = "http://i3a305.p.ssafy.io:8399/api";
+
 export default {
   name: "DetailPost",
-  // props: { // back 연결되면 사용할 데이터
-  //   backData: {
-  //     type: Object,
-  //   },
-  // },
+  components: { Comment },
   created() {
-    this.backData = this.dummyData[this.$route.params.no - 1];
+    let boardurlId = this.$route.params.no;
+    axios.get(`${BACK_URL}/boards/${boardurlId}`).then((response) => {
+      // console.log(response);
+      this.detailData.boardId = response.data.board.boardId;
+      this.detailData.title = response.data.board.title;
+      this.detailData.nickname = response.data.board.nickname;
+      this.detailData.ingredient = response.data.board.ingredient;
+      this.detailData.content = response.data.board.content;
+      this.detailData.createAt = response.data.board.createAt;
+      this.detailData.updateAt = response.data.board.updateAt;
+      this.detailData.difficultyCount = response.data.board.difficultyCount;
+      this.detailData.easyCount = response.data.board.easyCount;
+      this.detailData.grade = response.data.board.grade;
+      this.detailData.cookingTime = response.data.board.cookingTime;
+      this.detailData.thumbailImage = response.data.board.crethumbailImageateAt;
+      this.detailData.steps = response.data.board.steps;
+      this.detailData.tags = response.data.board.tags;
+      this.detailData.views = response.data.board.views;
+      this.detailData.comments = response.data.board.comments;
+      this.detailData.writerImage = response.data.board.writerImage;
+
+      // console.log(this.detailData);
+    });
+    axios
+      .get(`${BACK_URL}/users/mypage`, {
+        headers: { "jwt-auth-token": this.$cookies.get("token") },
+      })
+      .then((response) => {
+        this.userData.nickname = response.data.mypage.nickname;
+      })
+      .catch((error) => {
+        this.userData.nickname = "";
+      });
   },
   data() {
     return {
       easy: true,
-      backData: {
-        // title: "김치전",
-        // content: "비오는 날 생각나는 김치전 드셔보세요!",
-        // image: "https://i.imgur.com/2nMSgb8.jpg",
-        // date: "2020.07.30",
-        // comment: 3,
-        // nickname: "비가오는날엔",
-        // like: 3,
+      detailData: {
+        views: 0,
+        boardId: "",
+        title: "",
+        writerImage: "",
+        nickname: "",
+        ingredients: "",
+        content: "",
+        createAt: "",
+        updateAt: null,
+        grade: "",
+        cookingTime: "",
+        thumbailImage: null,
+        steps: [],
+        tags: [],
+        comments: [],
+        difficultyCount: 0,
+        easyCount: 0,
       },
-      dummyData: [
-        {
-          title: "간단한 연어덮밥",
-          content: "30분안에 끝나는 연어덮밥 요리 방법",
-          image: "https://i.imgur.com/Ztp9hAN.jpg",
-          materials: "연어 간장 와사비 밥 양파",
-          date: "2020.07.30",
-          comment: 3,
-          nickname: "연어가좋아",
-          like: 3,
-          steps: ["연어를 자른다", "밥 위에 연어를 올린다.", "양파와 와사비로 고명을 해준다."],
-        },
-        {
-          title: "쇠고기 미역국",
-          content: "거의 밥도둑!",
-          image: "https://i.imgur.com/O1cQ8N7.jpg",
-          materials: "소고기 소금 미역 간장 참기름",
-          date: "2020.07.30",
-          comment: 3,
-          nickname: "간장게장",
-          like: 3,
-          steps: ["물을 끓인다", "미역을 넣고 끓인다.", "소고기를 넣고 간장으로 간을 맞춰준다.", "참기름으로 감칠맛을 더한다."],
-        },
-        {
-          title: "김치볶음밥",
-          content: "백종원 선생님의 황금레시피",
-          image: "https://i.imgur.com/7pNI9BA.jpg",
-          materials: "김치 간장 스팸 베이컨 밥 계란",
-          date: "2020.07.30",
-          comment: 3,
-          nickname: "골목식당",
-          like: 3,
-          steps: ["김치를 식용유에 볶는다.", "스팸을 넣어 볶다가 밥을 넣는다.", "간장을 살짝 태워 밥에 섞는다.", "계란을 넣고 마무리한다."],
-        },
-        {
-          title: "전주비빔밥",
-          content: "계속 생각나는 그 맛",
-          image: "https://i.imgur.com/oDHwKwP.jpg",
-          materials: "계란 소고기 당근 콩나물 간장 고추장 밥 오이 호박",
-          date: "2020.07.30",
-          comment: 3,
-          nickname: "콩나물국밥",
-          like: 3,
-          steps: ["밥을 한다", "나물을 준비한다.", "나물은 얹고 섞어준다."],
-        },
-        {
-          title: "김치전",
-          content: "비오는 날 생각나는",
-          image: "https://i.imgur.com/2nMSgb8.jpg",
-          date: "2020.07.30",
-          materials: "김치 소금 간장 다진마늘 양파 밀가루 물",
-          comment: 3,
-          nickname: "비가오는날엔",
-          like: 3,
-          steps: ["밀가루와 김치를 넣고 반죽을 만든다.", "반죽을 굽는다.", "맛있게 먹는다."],
-        },
-      ],
-      // likenum: 5,
+      userData: {
+        nickname: "",
+      },
     };
   },
-  computed: {}, // 미리 만들어 놓자
   methods: {
-    changeEasy() {
-      if (this.easy) {
-        this.easy = false;
+    goUpdate() {
+      this.$router.push(`/update/${this.detailData.boardId}`);
+    },
+    deletePost() {
+      axios
+        .delete(`${BACK_URL}/boards/${this.detailData.boardId}`, {
+          headers: { "jwt-auth-token": this.$cookies.get("token") },
+        })
+        .then((response) => {
+          if (response.status === 200) {
+            alert("삭제되었습니다.");
+            this.$router.push("/");
+          }
+        })
+        .catch((error) => {
+          alert(error);
+        });
+    },
+    plusHard() {
+      axios
+        .post(
+          `${BACK_URL}/boards/${this.detailData.boardId}`,
+          {
+            pressedBtn: 1,
+          },
+          {
+            headers: { "jwt-auth-token": this.$cookies.get("token") },
+          }
+        )
+        .then((response) => {
+          if (response.status === 200) {
+            alert("어려워요를 클릭하였습니다.");
+            this.$router.go();
+          }
+        })
+        .catch((error) => {
+          alert(error);
+        });
+    },
+    plusEasy() {
+      axios
+        .post(
+          `${BACK_URL}/boards/${this.detailData.boardId}`,
+          {
+            pressedBtn: 2,
+          },
+          {
+            headers: { "jwt-auth-token": this.$cookies.get("token") },
+          }
+        )
+        .then((response) => {
+          if (response.status === 200) {
+            alert("쉬워요를 클릭하였습니다.");
+            this.$router.go();
+          }
+        })
+        .catch((error) => {
+          alert("로그인후 이용해주세요!");
+        });
+    },
+    goOtherpage(userNickName) {
+      // console.log(this.userData.nickname);
+
+      if (this.userData.nickname == "") {
+        alert("상대방 타임라인 구경은 로그인 후 이용해주세요!!");
+        return;
       } else {
-        this.easy = true;
+        axios
+          .get(`${BACK_URL}/users/mypage`, {
+            headers: { "jwt-auth-token": this.$cookies.get("token") },
+          })
+          .then((response) => {
+            this.userData.nickname = response.data.mypage.nickname;
+            if (this.userData.nickname === userNickName) {
+              this.$router.push("/user/mypage");
+            } else {
+              this.$router.push("/users/otherpage/" + userNickName);
+            }
+          })
+          .catch((error) => {
+            alert(error);
+          });
       }
+    },
+    createComment(comment) {
+      axios
+        .post(
+          `${BACK_URL}/boards/comments`,
+          {
+            boardId: this.detailData.boardId,
+            commentContent: comment,
+          },
+          {
+            headers: { "jwt-auth-token": this.$cookies.get("token") },
+          }
+        )
+        .then((response) => {
+          // console.log(response);
+          if (response.status === 200) {
+            alert("댓글이 작성되었습니다!");
+            axios
+              .get(`${BACK_URL}/boards/${this.detailData.boardId}`)
+              .then((response) => {
+                this.detailData.comments = response.data.board.comments;
+              });
+          }
+        })
+        .catch((error) => {
+          alert(error);
+        });
+    },
+    deleteComment(commentId) {
+      axios
+        .delete(`${BACK_URL}/boards/comments/${commentId}`)
+        .then((response) => {
+          // console.log(response);
+          if (response.status === 200) {
+            alert("댓글이 삭제되었습니다.");
+            axios
+              .get(`${BACK_URL}/boards/${this.detailData.boardId}`)
+              .then((response) => {
+                this.detailData.comments = response.data.board.comments;
+              });
+          }
+        })
+        .catch((error) => {
+          alert(error);
+        });
+    },
+    updateComment(commentId, commentcontent) {
+      axios
+        .put(
+          `${BACK_URL}/boards/comments/${commentId}`,
+          {
+            commentContent: commentcontent,
+          },
+          {
+            headers: { "jwt-auth-token": this.$cookies.get("token") },
+          }
+        )
+        .then((response) => {
+          // console.log(response);
+          if (response.status === 200) {
+            alert("댓글이 수정되었습니다.");
+            this.$router.go();
+          }
+        })
+        .catch((error) => {
+          alert(error);
+        });
     },
   },
 };
@@ -202,5 +356,28 @@ export default {
 .icon {
   text-align: right;
   cursor: pointer;
+}
+.writerArea {
+  cursor: pointer;
+}
+.inputLength {
+  width: 100%;
+}
+.easyhardCss {
+  margin-top: 10px;
+  text-align: center;
+  cursor: pointer;
+}
+.writerButton {
+  text-align: end;
+}
+.profile {
+  margin: 0px;
+  width: 50px;
+  height: 50px;
+}
+
+.font {
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
 </style>

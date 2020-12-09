@@ -1,5 +1,5 @@
 export default {
-  TITLE: "SSAFY 개발블로그",
+  TITLE: "냉장고를 Vue탁해",
   baseUrl:
     "http://ec2-54-180-116-157.ap-northeast-2.compute.amazonaws.com:8888",
   LS_KEY: {

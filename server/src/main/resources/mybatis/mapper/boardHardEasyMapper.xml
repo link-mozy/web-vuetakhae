@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.web.server.repo.HardEasyDao">
+
+    <!-- 1은  hard 2는 easy -->
+    <update id="hardEasyChoice" parameterType="hardEasy">
+        update hardeasy
+        <set>
+            <if test="pressedBtn==1">
+                <choose>
+                    <when test="grade==2 or grade==0">
+                        grade=#{pressedBtn}
+                    </when>
+                    <otherwise>
+                        grade=0
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="pressedBtn==2">
+                <choose>
+                    <when test="grade==1 or grade==0">
+                        grade=#{pressedBtn}
+                    </when>
+                    <otherwise>
+                        grade=0
+                    </otherwise>
+                </choose>
+            </if>
+        </set>
+        WHERE board_id=#{boardId} AND user_id=(select user_id from users WHERE email=#{email})
+    </update>
+
+    <insert id="firstChoice" parameterType="hardEasy">
+         INSERT INTO hardeasy(board_id,user_id,grade)
+         <if test="pressedBtn == 1">
+             VALUES(#{boardId},(select user_id from users WHERE email=#{email}),1)
+         </if>
+         <if test="pressedBtn == 2">
+             VALUES (#{boardId},(select user_id from users WHERE email=#{email}),2)
+         </if>
+    </insert>
+
+    <select id="checkChoice" resultType="hardeasy">
+        select * from hardeasy WHERE board_id=#{boardId} AND user_id=(select user_id from users WHERE email=#{email})
+    </select>
+
+</mapper>

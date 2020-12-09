@@ -36,7 +36,7 @@ export default {
       this.isHeader = isHeader;
     },
   },
-  data: function() {
+  data: function () {
     return {
       isHeader: true,
       constants,
@@ -47,10 +47,24 @@ export default {
 
 <style>
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+  font-family: TmoneyRoundWindExtraBold;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
+}
+@font-face {
+  font-family: "TmoneyRoundWindExtraBold";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_20-07@1.0/TmoneyRoundWindExtraBold.woff")
+    format("woff");
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: "MapoGoldenPier";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/MapoGoldenPierA.woff")
+    format("woff");
+  font-weight: normal;
+  font-style: normal;
 }
 </style>
